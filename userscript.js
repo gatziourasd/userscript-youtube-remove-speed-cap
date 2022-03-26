@@ -9,38 +9,63 @@
 // @grant        none
 // ==/UserScript==
 
-(function() {
-    'use strict';
-    console.log("%cYoutube 2x", "font-weight: 700; font-family: 'Poppins'; color: green; padding: 5px;");
+(function () {
+  "use strict";
+  console.log(
+    "%cYoutube2x",
+    "font-weight: 700; font-family: 'Poppins'; color: green; padding: 5px;"
+  );
 
+  function attach() {
     let videoElm = document.getElementsByTagName("video")[0];
-    if(!videoElm){console.log("Youtube 2x: 'No Video Element found!'"); return}
+    if (!videoElm) {
+      console.log("Youtube 2x: 'No Video Element found!'");
+      return;
+    }
 
-    let playbackRate = parseFloat(localStorage.getItem('youtbe2x-playbackrate')) ?? 1.0;
+    let playbackRate =
+      parseFloat(localStorage.getItem("youtbe2x-playbackrate")) ?? 1.0;
     videoElm.playbackRate = playbackRate;
 
-
     document.body.onkeydown = (e) => {
-        if(e.key === ";"){
-            changePlaybackRate(-0.25)
-        }else if(e.key === ":"){
-            changePlaybackRate(0.25)
-        }
+      if (e.key === ";") {
+        changePlaybackRate(-0.25);
+      } else if (e.key === ":") {
+        changePlaybackRate(0.25);
+      }
+    };
+
+    function changePlaybackRate(delta = 0.25) {
+      playbackRate += delta;
+      playbackRate = playbackRate < 0.25 ? 0.25 : playbackRate;
+      let playbackElm = document.querySelector(
+        "#movie_player > div:nth-child(9) > div.ytp-bezel-text-wrapper > div"
+      );
+      playbackElm.innerText = playbackRate;
+      videoElm.playbackRate = playbackRate;
+      localStorage.setItem("youtbe2x-playbackrate", playbackRate);
     }
 
-    function changePlaybackRate(delta = 0.25){
-        playbackRate += delta;
-        playbackRate = playbackRate < 0.25 ? 0.25 : playbackRate;
-        let playbackElm = document.querySelector("#movie_player > div:nth-child(9) > div.ytp-bezel-text-wrapper > div");
-        playbackElm.innerText = playbackRate;
+    videoElm.onratechange = () => {
+      if (videoElm.playbackRate !== playbackRate) {
         videoElm.playbackRate = playbackRate;
-        localStorage.setItem("youtbe2x-playbackrate", playbackRate)
-    }
+        let playbackElm = document.querySelector(
+          "#movie_player > div:nth-child(9) > div.ytp-bezel-text-wrapper > div"
+        );
+        playbackElm.innerText = playbackRate;
+      }
+    };
+  }
 
-    videoElm.onratechange = () =>{
-        if(videoElm.playbackRate !== playbackRate){
-            videoElm.playbackRate = playbackRate;
-        }
-    }
+  let href = null;
+  const bodyObserver = new MutationObserver(() => {
+    if (href !== window.location.href) {
+      href = window.location.href;
 
+      if (window.location.pathname === "/watch") {
+        attach();
+      }
+    }
+  });
+  bodyObserver.observe(document.body, { childList: true, subtree: true });
 })();
